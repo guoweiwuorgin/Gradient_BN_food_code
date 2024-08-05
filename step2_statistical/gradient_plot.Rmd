@@ -1,0 +1,417 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+```{r}
+setwd('D:/youyi_fucha/first_test/gradient_voxel/final_re/')
+library(bruceR)
+library(zoo)
+net_data <- rio::import('gradient-1_score_subnetwork.mat')
+SUB <- net_data$gradient_score_subnetwork[[8]][[1]]
+visual <- net_data$gradient_score_subnetwork[[1]][[1]]
+Motor<- net_data$gradient_score_subnetwork[[2]][[1]]
+DAN  <- net_data$gradient_score_subnetwork[[3]][[1]]
+VAN <- net_data$gradient_score_subnetwork[[4]][[1]]
+Lim <- net_data$gradient_score_subnetwork[[5]][[1]]
+FPN <- net_data$gradient_score_subnetwork[[6]][[1]]
+DMN <- net_data$gradient_score_subnetwork[[7]][[1]]
+
+network_SUB <- c(rep('SubCortex',length(SUB)),
+                        rep('Visual',length(visual)),
+                        rep('Somatomotor',length(Motor)),
+                        rep('Dorsal Attention',length(DAN)),
+                        rep('Ventral Attention',length(VAN)),
+                        rep('Limbic',length(Lim)),
+                        rep('Frontoparietal',length(FPN)),
+                        rep('Default Mode',length(DMN)))
+network_SUB_data <- c(SUB,visual,Motor,DAN,VAN,Lim,FPN,DMN)
+SUB_tabel <- data.frame(Network=network_SUB,Gradient_score=network_SUB_data)
+myPalette <- c("#D9717C","#409832", "#F0B944", "#DAF7A6", "#789AC0", "#D7DBDD","#E065FE", "#a307cf")
+
+library(ggridges)
+library(ggplot2)
+library(viridis)
+library(hrbrthemes)
+# Plot
+library("ggthemes")
+SUB_tabel  %>% 
+    ggplot( aes(x = Gradient_score*-1, y = reorder(Network,Gradient_score))) +
+    geom_density_ridges_gradient(aes(fill=Network,rel_min_height = 0.00001,scale = 2,color=Network))+
+    theme_classic() +
+    theme(legend.position="none",
+          panel.spacing = unit(0.15, "lines"),
+          axis.text = element_text(size = 10,color="black",family="serif"),
+          strip.text.x = element_text(size = 20,color="black",family="serif")
+          )+
+  ylab("")+xlab("")+scale_fill_manual(values = myPalette) + scale_color_manual(values = myPalette)+theme_hc()+
+  theme(axis.text.x = element_text(face = "bold"),axis.text.y = element_text(face = "bold"))->SUB_plot
+ggsave(filename = "network_wise_gradient1_SUB.png",SUB_plot,width = 180, height = 100, dpi = 300, units = "mm", device='png')
+
+
+#
+SUB <- net_data$gradient_score_subnetwork[[8]][[2]]
+visual <- net_data$gradient_score_subnetwork[[1]][[2]]
+Motor<- net_data$gradient_score_subnetwork[[2]][[2]]
+DAN  <- net_data$gradient_score_subnetwork[[3]][[2]]
+VAN <- net_data$gradient_score_subnetwork[[4]][[2]]
+Lim <- net_data$gradient_score_subnetwork[[5]][[2]]
+FPN <- net_data$gradient_score_subnetwork[[6]][[2]]
+DMN <- net_data$gradient_score_subnetwork[[7]][[2]]
+
+network_CON <- c(rep('SubCortex',length(SUB)),
+                        rep('Visual',length(visual)),
+                        rep('Somatomotor',length(Motor)),
+                        rep('Dorsal Attention',length(DAN)),
+                        rep('Ventral Attention',length(VAN)),
+                        rep('Limbic',length(Lim)),
+                        rep('Frontoparietal',length(FPN)),
+                        rep('Default Mode',length(DMN)))
+network_CON_data <- c(SUB,visual,Motor,DAN,VAN,Lim,FPN,DMN)
+
+CON_tabel <- data.frame(Network=network_CON,Gradient_score=network_CON_data)
+CON_tabel  %>% 
+    ggplot( aes(x = Gradient_score*-1, y = reorder(Network,Gradient_score))) +
+    geom_density_ridges_gradient(aes(fill=Network,rel_min_height = 0.00001,scale = 2,color=Network))+
+    theme_classic() +
+    theme(legend.position="none",
+          panel.spacing = unit(0.15, "lines"),
+          axis.text = element_text(size = 10,color="black",family="serif"),
+          strip.text.x = element_text(size = 20,color="black",family="serif")
+          )+
+  ylab("")+xlab("")+scale_fill_manual(values = myPalette) + scale_color_manual(values = myPalette)+theme_hc()+
+  theme(axis.text.x = element_text(face = "bold"),axis.text.y = element_text(face = "bold"))->CON
+ggsave(filename = "network_wise_gradient1_CON.png",CON,width = 180, height = 100, dpi = 300, units = "mm", device='png')
+
+
+
+
+z.test2sam = function(a, b, var.a, var.b){
+   n.a = length(a)
+   n.b = length(b)
+   zeta = (mean(a) - mean(b)) / (sqrt(var.a/n.a + var.b/n.b))
+   return(zeta)
+}
+p_all<-c()
+n<-1
+for(net in unique(CON_tabel$Network)){ 
+CON_tabel %>% filter(Network==net)->tmp_con
+SUB_tabel %>% filter(Network==net)->tmp_sub
+print(net)
+zscore<-z.test2sam(tmp_sub$Gradient_score ,tmp_con$Gradient_score,var(tmp_sub$Gradient_score),var(tmp_con$Gradient_score))
+p_all[n] <- pnorm(q=zscore, lower.tail=TRUE)
+n<-n+1
+}
+p.adjust(p_all,method = "BH")
+
+
+create_beautiful_radarchart <- function(data, color = "#00AFBB", 
+                                        vlabels = colnames(data), vlcex = 0.7,
+                                        caxislabels = NULL, title = NULL, ...){
+  radarchart(
+    data, axistype = 1,
+    # Customize the polygon
+    pcol = color, pfcol = scales::alpha(color, 0.5), plwd = 3, plty = 2,
+    # Customize the grid
+    cglcol = "black", cglty = 3, cglwd = 0.8,
+    # Customize the axis
+    axislabcol = "grey", 
+    # Variable labels
+    vlcex = 1.5, vlabels = vlabels,
+    caxislabels = caxislabels, title = title, ...
+  )
+}
+
+
+CON_tabel %>% mutate(group=rep("CON",length(Network)))->new_tabel_g1CON
+SUB_tabel %>% mutate(group=rep("SUB",length(Network)))->new_tabel_g1SUB
+
+
+new_tabel_g1CON %>% rbind(new_tabel_g1SUB) %>% group_by(group,Network)%>%
+  summarise(gradient_mean=mean(Gradient_score))%>%
+  pivot_wider(names_from = "group",values_from = "gradient_mean",id_cols = "Network")%>%
+  mutate(chayi_score=SUB-CON,CON_baseline=rep(0,length(CON)))->summary_tabel
+
+summary_tabel$Network <- factor(summary_tabel$Network,levels = unique(summary_tabel$Network),labels = c("DMN","DAN","FPN","LIB","SMN","SUB","VAN","VIS"))
+summary_tabel %>% select(Network,chayi_score) %>% pivot_wider(names_from = Network,values_from = chayi_score)->SUB_radar
+SUB_radar[abs(SUB_radar)<0.001]=0 
+rownames(SUB_radar)<-"BN"
+summary_tabel %>% select(Network,CON_baseline) %>% pivot_wider(names_from = Network,values_from = CON_baseline)->CON_radar
+rownames(CON_radar)<-"HC"
+library(fmsb)
+max_min <- data.frame(
+  DMN = c(0.003, -0.003), DAN = c(0.003, -0.003), FPN = c(0.003, -0.003),
+  LIB = c(0.003, -0.003), SMN = c(0.003, -0.003), SUB = c(0.003, -0.003),
+  VAN = c(0.003, -0.003), VIS = c(0.003, -0.003)
+)
+rownames(max_min) <- c("Max", "Min")
+
+df <- rbind(max_min, SUB_radar,CON_radar)
+
+
+
+op <- par(mar = c(1, 2, 2, 2))
+create_beautiful_radarchart(
+  data = df, caxislabels = c("", "", "", "", ""),
+  color = c("#71C9DD", "#EB6F5D")
+)
+# Add an horizontal legend
+legend(
+  x = "bottom", legend = rownames(df[-c(1,2),]), horiz = TRUE,
+  bty = "n", pch = 1 , col = c("#71C9DD", "#EB6F5D", "#71C9DD"),
+  text.col = "black", cex = 1, pt.cex = 1
+  )
+par(op)
+
+
+```
+
+```{r}
+setwd('D:/youyi_fucha/first_test/gradient_voxel/final_re')
+library(bruceR)
+library(zoo)
+net_data <- rio::import('gradient-2_score_subnetwork.mat')
+SUB <- net_data$gradient_score_subnetwork[[8]][[1]]
+visual <- net_data$gradient_score_subnetwork[[1]][[1]]
+Motor<- net_data$gradient_score_subnetwork[[2]][[1]]
+DAN  <- net_data$gradient_score_subnetwork[[3]][[1]]
+VAN <- net_data$gradient_score_subnetwork[[4]][[1]]
+Lim <- net_data$gradient_score_subnetwork[[5]][[1]]
+FPN <- net_data$gradient_score_subnetwork[[6]][[1]]
+DMN <- net_data$gradient_score_subnetwork[[7]][[1]]
+
+network_SUB <- c(rep('SubCortex',length(SUB)),
+                        rep('Visual',length(visual)),
+                        rep('Somatomotor',length(Motor)),
+                        rep('Dorsal Attention',length(DAN)),
+                        rep('Ventral Attention',length(VAN)),
+                        rep('Limbic',length(Lim)),
+                        rep('Frontoparietal',length(FPN)),
+                        rep('Default Mode',length(DMN)))
+network_SUB_data <- c(SUB,visual,Motor,DAN,VAN,Lim,FPN,DMN)
+SUB_tabel <- data.frame(Network=network_SUB,Gradient_score=network_SUB_data)
+
+library(ggridges)
+library(ggplot2)
+library(viridis)
+library(hrbrthemes)
+# Plot
+library("ggthemes")
+SUB_tabel  %>% 
+    ggplot( aes(x = Gradient_score*-1, y = reorder(Network,Gradient_score))) +
+    geom_density_ridges_gradient(aes(fill=Network,rel_min_height = 0.00001,scale = 2,color=Network))+
+    theme_classic() +
+    theme(legend.position="none",
+          panel.spacing = unit(0.15, "lines"),
+          axis.text = element_text(size = 10,color="black",family="serif"),
+          strip.text.x = element_text(size = 20,color="black",family="serif")
+          )+
+  ylab("")+xlab("")+scale_fill_manual(values = myPalette) + scale_color_manual(values = myPalette)+theme_hc()+
+  theme(axis.text.x = element_text(face = "bold"),axis.text.y = element_text(face = "bold"))+scale_x_continuous(limits = c(-0.08,0.08))->SUB
+ggsave(filename = "network_wise_gradient2_SUB.png",SUB,width = 180, height = 100, dpi = 300, units = "mm", device='png')
+
+
+#
+SUB <- net_data$gradient_score_subnetwork[[8]][[2]]
+visual <- net_data$gradient_score_subnetwork[[1]][[2]]
+Motor<- net_data$gradient_score_subnetwork[[2]][[2]]
+DAN  <- net_data$gradient_score_subnetwork[[3]][[2]]
+VAN <- net_data$gradient_score_subnetwork[[4]][[2]]
+Lim <- net_data$gradient_score_subnetwork[[5]][[2]]
+FPN <- net_data$gradient_score_subnetwork[[6]][[2]]
+DMN <- net_data$gradient_score_subnetwork[[7]][[2]]
+
+network_CON <- c(rep('SubCortex',length(SUB)),
+                        rep('Visual',length(visual)),
+                        rep('Somatomotor',length(Motor)),
+                        rep('Dorsal Attention',length(DAN)),
+                        rep('Ventral Attention',length(VAN)),
+                        rep('Limbic',length(Lim)),
+                        rep('Frontoparietal',length(FPN)),
+                        rep('Default Mode',length(DMN)))
+network_CON_data <- c(SUB,visual,Motor,DAN,VAN,Lim,FPN,DMN)
+
+CON_tabel <- data.frame(Network=network_CON,Gradient_score=network_CON_data)
+CON_tabel  %>% 
+    ggplot( aes(x = Gradient_score*-1, y = reorder(Network,Gradient_score))) +
+    geom_density_ridges_gradient(aes(fill=Network,rel_min_height = 0.00001,scale = 2,color=Network))+
+    theme_classic() +
+    theme(legend.position="none",
+          panel.spacing = unit(0.15, "lines"),
+          axis.text = element_text(size = 10,color="black",family="serif"),
+          strip.text.x = element_text(size = 20,color="black",family="serif")
+          )+
+  ylab("")+xlab("")+scale_fill_manual(values = myPalette) + scale_color_manual(values = myPalette)+theme_hc()+
+  theme(axis.text.x = element_text(face = "bold"),axis.text.y = element_text(face = "bold"))+scale_x_continuous(limits = c(-0.08,0.08))->CON
+ggsave(filename = "network_wise_gradient2_CON.png",CON,width = 180, height = 100, dpi = 300, units = "mm", device='png')
+n<-1
+p_all <-c()
+for(net in unique(CON_tabel$Network)){ 
+CON_tabel %>% filter(Network==net)->tmp_con
+SUB_tabel %>% filter(Network==net)->tmp_sub
+print(net)
+zscore<-z.test2sam(tmp_sub$Gradient_score ,tmp_con$Gradient_score,var(tmp_sub$Gradient_score),var(tmp_con$Gradient_score))
+print(pnorm(q=zscore, lower.tail=TRUE))
+p_all[n] <- pnorm(q=zscore, lower.tail=TRUE)
+n<-n+1
+}
+p.adjust(p_all,method = "BH")
+CON_tabel %>% mutate(group=rep("CON",length(Network)))->new_tabel_g2CON
+SUB_tabel %>% mutate(group=rep("SUB",length(Network)))->new_tabel_g2SUB
+
+
+new_tabel_g2CON %>% rbind(new_tabel_g2SUB) %>% group_by(group,Network)%>%
+  summarise(gradient_mean=mean(Gradient_score))%>%
+  pivot_wider(names_from = "group",values_from = "gradient_mean",id_cols = "Network")%>%
+  mutate(chayi_score=SUB-CON,CON_baseline=rep(0,length(CON)))->summary_tabel
+
+summary_tabel$Network <- factor(summary_tabel$Network,levels = unique(summary_tabel$Network),labels = c("DMN","DAN","FPN","LIB","SMN","SUB","VAN","VIS"))
+summary_tabel %>% select(Network,chayi_score) %>% pivot_wider(names_from = Network,values_from = chayi_score)->SUB_radar
+SUB_radar[abs(SUB_radar)<0.001]=0 
+rownames(SUB_radar)<-"BN"
+summary_tabel %>% select(Network,CON_baseline) %>% pivot_wider(names_from = Network,values_from = CON_baseline)->CON_radar
+rownames(CON_radar)<-"HC"
+library(fmsb)
+max_min <- data.frame(
+  DMN = c(0.004, -0.003), DAN = c(0.004, -0.003), FPN = c(0.004, -0.003),
+  LIB = c(0.004, -0.003), SMN = c(0.004, -0.003), SUB = c(0.004, -0.003),
+  VAN = c(0.004, -0.003), VIS = c(0.004, -0.003)
+)
+rownames(max_min) <- c("Max", "Min")
+
+df <- rbind(max_min, SUB_radar,CON_radar)
+
+
+
+op <- par(mar = c(1, 2, 2, 2))
+create_beautiful_radarchart(
+  data = df, caxislabels = c("", "", "", "", ""),
+  color = c("#71C9DD", "#EB6F5D")
+)
+# Add an horizontal legend
+legend(
+  x = "bottom", legend = rownames(df[-c(1,2),]), horiz = TRUE,
+  bty = "n", pch = 1 , col = c("#71C9DD", "#EB6F5D", "#71C9DD"),
+  text.col = "black", cex = 1, pt.cex = 1
+  )
+par(op)
+```
+
+```{r}
+setwd('D:/youyi_fucha/first_test/gradient_voxel/results/')
+library(bruceR)
+library(zoo)
+net_data <- rio::import('gradient-3_score_subnetwork.mat')
+SUB <- net_data$gradient_score_subnetwork[[8]][[1]]
+visual <- net_data$gradient_score_subnetwork[[1]][[1]]
+Motor<- net_data$gradient_score_subnetwork[[2]][[1]]
+DAN  <- net_data$gradient_score_subnetwork[[3]][[1]]
+VAN <- net_data$gradient_score_subnetwork[[4]][[1]]
+Lim <- net_data$gradient_score_subnetwork[[5]][[1]]
+FPN <- net_data$gradient_score_subnetwork[[6]][[1]]
+DMN <- net_data$gradient_score_subnetwork[[7]][[1]]
+
+network_SUB <- c(rep('SubCortex',length(SUB)),
+                        rep('Visual',length(visual)),
+                        rep('Somatomotor',length(Motor)),
+                        rep('Dorsal Attention',length(DAN)),
+                        rep('Ventral Attention',length(VAN)),
+                        rep('Limbic',length(Lim)),
+                        rep('Frontoparietal',length(FPN)),
+                        rep('Default Mode',length(DMN)))
+network_SUB_data <- c(SUB,visual,Motor,DAN,VAN,Lim,FPN,DMN)
+SUB_tabel <- data.frame(Network=network_SUB,Gradient_score=network_SUB_data)
+
+library(ggridges)
+library(ggplot2)
+library(viridis)
+library(hrbrthemes)
+# Plot
+library("ggthemes")
+SUB_tabel  %>% 
+    ggplot( aes(x = Gradient_score*-1, y = reorder(Network,Gradient_score))) +
+    geom_density_ridges_gradient(aes(fill=Network,rel_min_height = 0.00001,scale = 2,color=Network))+
+    theme_classic() +
+    theme(legend.position="none",
+          panel.spacing = unit(0.15, "lines"),
+          axis.text = element_text(size = 10,color="black",family="serif"),
+          strip.text.x = element_text(size = 20,color="black",family="serif")
+          )+
+  ylab("")+xlab("")+scale_fill_manual(values = myPalette) + scale_color_manual(values = myPalette)+theme_hc()+
+  theme(axis.text.x = element_text(face = "bold"),axis.text.y = element_text(face = "bold"))+scale_x_continuous(limits = c(-0.06,0.05))->SUB
+ggsave(filename = "network_wise_gradient3_SUB.png",SUB,width = 180, height = 100, dpi = 300, units = "mm", device='png')
+
+
+#
+SUB <- net_data$gradient_score_subnetwork[[8]][[2]]
+visual <- net_data$gradient_score_subnetwork[[1]][[2]]
+Motor<- net_data$gradient_score_subnetwork[[2]][[2]]
+DAN  <- net_data$gradient_score_subnetwork[[3]][[2]]
+VAN <- net_data$gradient_score_subnetwork[[4]][[2]]
+Lim <- net_data$gradient_score_subnetwork[[5]][[2]]
+FPN <- net_data$gradient_score_subnetwork[[6]][[2]]
+DMN <- net_data$gradient_score_subnetwork[[7]][[2]]
+
+network_CON <- c(rep('SubCortex',length(SUB)),
+                        rep('Visual',length(visual)),
+                        rep('Somatomotor',length(Motor)),
+                        rep('Dorsal Attention',length(DAN)),
+                        rep('Ventral Attention',length(VAN)),
+                        rep('Limbic',length(Lim)),
+                        rep('Frontoparietal',length(FPN)),
+                        rep('Default Mode',length(DMN)))
+network_CON_data <- c(SUB,visual,Motor,DAN,VAN,Lim,FPN,DMN)
+
+CON_tabel <- data.frame(Network=network_CON,Gradient_score=network_CON_data)
+CON_tabel  %>% 
+    ggplot( aes(x = Gradient_score*-1, y = reorder(Network,Gradient_score))) +
+    geom_density_ridges_gradient(aes(fill=Network,rel_min_height = 0.00001,scale = 2,color=Network))+
+    theme_classic() +
+    theme(legend.position="none",
+          panel.spacing = unit(0.15, "lines"),
+          axis.text = element_text(size = 10,color="black",family="serif"),
+          strip.text.x = element_text(size = 20,color="black",family="serif")
+          )+
+  ylab("")+xlab("")+scale_fill_manual(values = myPalette) + scale_color_manual(values = myPalette)+theme_hc()+
+  theme(axis.text.x = element_text(face = "bold"),axis.text.y = element_text(face = "bold"))+scale_x_continuous(limits = c(-0.06,0.05))->CON
+ggsave(filename = "network_wise_gradient3_CON.png",CON,width = 180, height = 100, dpi = 300, units = "mm", device='png')
+for(net in unique(CON_tabel$Network)){ 
+CON_tabel %>% filter(Network==net)->tmp_con
+SUB_tabel %>% filter(Network==net)->tmp_sub
+print(net)
+zscore<-z.test2sam(tmp_sub$Gradient_score ,tmp_con$Gradient_score,var(tmp_sub$Gradient_score),var(tmp_con$Gradient_score))
+print(pnorm(q=zscore, lower.tail=TRUE))
+}
+CON_tabel %>% mutate(group=rep("CON",length(Network)))->new_tabel_g3CON
+SUB_tabel %>% mutate(group=rep("SUB",length(Network)))->new_tabel_g3SUB
+```
+
+
+
+```{r}
+
+
+
+
+names(new_tabel_g1CON)[2]<-"Gradient1_score"
+names(new_tabel_g2CON)[2]<-"Gradient2_score"
+new_tabel_g1CON %>% cbind(new_tabel_g2CON$Gradient2_score)->gradient12
+gradient12 %>% export("Group_HC_gradient.xlsx")
+
+names(gradient12)[4]<-"Gradient2_score"
+gradient12%>% ggplot(aes(Gradient1_score,Gradient2_score,color=Network))+geom_point(aes(alpha=0.6))+scale_color_manual(values = myPalette)+ylim(-0.08,0.08)+xlim(-0.1,0.1)+theme_classic(base_size = 20)->p
+
+ggsave(filename = "D:/youyi_fucha/first_test/gradient_voxel/gradient_distance_CON.png",p,width = 260, height = 160, dpi = 300, units = "mm", device='png')
+
+
+names(new_tabel_g1SUB)[2]<-"Gradient1_score"
+names(new_tabel_g2SUB)[2]<-"Gradient2_score"
+new_tabel_g1SUB %>% cbind(new_tabel_g2SUB$Gradient2_score)->gradient12
+gradient12 %>% export("Group_PUB_gradient.xlsx")
+
+names(gradient12)[4]<-"Gradient2_score"
+gradient12%>% ggplot(aes(Gradient1_score,Gradient2_score,color=Network))+geom_point(aes(alpha=0.6))+scale_color_manual(values = myPalette)+ylim(-0.08,0.08)+xlim(-0.1,0.1)+theme_classic(base_size = 20)->p
+
+ggsave(filename = "D:/youyi_fucha/first_test/gradient_voxel/gradient_distance_SUB.png",p,width = 260, height = 160, dpi = 300, units = "mm", device='png')
+
+```
+
