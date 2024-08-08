@@ -42,7 +42,7 @@ for gradient=1:3
 end
 %%
 vol_mod = spm_read_vols(spm_vol([script_dir,'mod_mask.nii']));
-vol_mask = spm_read_vols(spm_vol([script_dir,'\Reslice_group_mask.nii']));
+vol_mask = spm_read_vols(spm_vol([script_dir,'\Reslice_group_mask.nii']));%% tSNR mask
 ind_mod = vol_mod(vol_mask>0);
 for n=1:3
     mean_gradient_sub = mean(gradient_emb_reordered{n}(:,id_sub),2)';
