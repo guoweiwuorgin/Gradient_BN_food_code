@@ -41,7 +41,7 @@ for i = 110:length(list)
     tic
     cd([out_path,'\Resliced_4\',list(i).name]);
     filename = dir('*.nii');
-    M = x_gen_matrix_voxel([script_dir,'\Reslice_group_mask.nii'],filename.name);
+    M = x_gen_matrix_voxel([script_dir,'\Reslice_group_mask.nii'],filename.name);%% Reslice_group_mask calculated from tSNR, exclude value lower than 0.1
     n = length(M);
     M_spar = M;
     tmp = sort(M);
