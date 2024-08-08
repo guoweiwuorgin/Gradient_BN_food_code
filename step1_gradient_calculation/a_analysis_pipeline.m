@@ -37,7 +37,7 @@ cd([out_path,'\Resliced_4']);
 list = dir;
 list(1:2) = [];
 data_dir = 'E:\youyi_fucha\first_test\gradient_voxel\';
-for i = 110:length(list)
+for i = 1:length(list)
     tic
     cd([out_path,'\Resliced_4\',list(i).name]);
     filename = dir('*.nii');
