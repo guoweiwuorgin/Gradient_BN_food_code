@@ -128,7 +128,7 @@ This step focuses on statistical processing of the gradients, range analysis, vo
 
 If you use this code in your research, please cite our paper:
 
-[Insert citation details here]
+[citation in coming]
 
 ## 8. Contact
 
