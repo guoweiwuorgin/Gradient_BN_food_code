@@ -11,7 +11,6 @@ behave_ <- data %>% filter(group=="SUB") %>% select(c(7:8,11:18))
 behave_$overeatting_time_perweek <- as.numeric(behave_$overeatting_time_perweek )
 behave_$hate_food_time_perweek <- as.numeric(behave_$hate_food_time_perweek )
 
-data$g1_RIFG <- -data$g1_RIFG
 IFG_R <- data %>% ggplot(aes(x=group,y=g1_RIFG,fill=group,color=group)) + 
   geom_flat_violin(position=position_nudge(x=.1, y=0), alpha=.8, width=.7,trim = TRUE) +
   geom_boxplot( width=.1, alpha = 0.5)+ theme_classic()+geom_signif(
