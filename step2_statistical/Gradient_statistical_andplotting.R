@@ -1,6 +1,5 @@
 setwd('D:/youyi_fucha/first_test/gradient_voxel/final_re')
 library(bruceR)
-data <- import('Gradient_use_subjects.xlsx')
 data <- import('gradient_chayi.xlsx')
 library(PupillometryR)
 library(ggsignif)
