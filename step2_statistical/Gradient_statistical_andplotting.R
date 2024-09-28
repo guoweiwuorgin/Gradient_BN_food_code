@@ -37,7 +37,6 @@ LIFG <- data %>% ggplot(aes(x=group,y=g2_LIFG,fill=group,color=group)) +
 
 ggsave(filename = "LIFG.png",LIFG,width = 180, height = 140, dpi = 300, units = "mm", device='png')
 
-data$g1_RIFG <- -data$g1_RIFG
 DEBQ_33_external <- lm(DEBQ_33_external~g1_RIFG*group,
                     data)
 GLM_summary(DEBQ_33_external)
