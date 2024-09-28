@@ -111,10 +111,8 @@ This step focuses on statistical processing of the gradients, range analysis, vo
   - tidyverse
   - ggplot2
   - rmarkdown
-  - [Add any additional R packages used in your scripts]
 - MATLAB (R2019b or later) with toolboxes:
   - Statistics and Machine Learning Toolbox
-  - [Add any additional MATLAB toolboxes required]
 - RStudio (for R Markdown processing)
 
 ## 6. Notes for Researchers
@@ -128,7 +126,14 @@ This step focuses on statistical processing of the gradients, range analysis, vo
 
 If you use this code in your research, please cite our paper:
 
-[citation in coming]
+Yiling Wang, Lirong Tang, Jiani Wang, Weihua Li, Miao Wang, Qian Chen, Zhenghan Yang, Zhanjiang Li, Zhenchang Wang, Guowei Wu, Peng Zhang,
+Disruption of network hierarchy pattern in bulimia nervosa reveals brain information integration disorder,
+Appetite,
+Volume 203,
+2024,
+107694,
+ISSN 0195-6663,
+https://doi.org/10.1016/j.appet.2024.107694.
 
 ## 8. Contact
 
